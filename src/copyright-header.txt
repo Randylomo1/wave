@@ -1,0 +1,14 @@
+/*
+ * Copyright (c) 2024 Wave Logistics. All Rights Reserved.
+ *
+ * This file is part of Wave Logistics Software and is protected by
+ * copyright laws and international treaty provisions. Unauthorized
+ * reproduction, distribution, or use of this file, or any portion of
+ * it, may result in severe civil and criminal penalties, and will be
+ * prosecuted to the maximum extent possible under the law.
+ *
+ * Wave Logistics reserves all intellectual property rights, including
+ * but not limited to copyrights, trademarks, trade secrets, patents,
+ * and any other proprietary rights in the code, documentation,
+ * appearance, structure, and organization of this software.
+ */

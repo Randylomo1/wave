@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="2048" height="2048" viewBox="0 0 2048 2048" xmlns="http://www.w3.org/2000/svg">
+  <rect width="2048" height="2048" fill="#2196F3"/>
+  <path d="M1024 400L1648 1200H400L1024 400Z" fill="white"/>
+  <path d="M824 1300H1224L1024 1600L824 1300Z" fill="white"/>
+  <text x="1024" y="1800" font-family="Arial" font-size="120" fill="white" text-anchor="middle">Wave Logistics</text>
+</svg>

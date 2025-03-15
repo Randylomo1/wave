@@ -1,0 +1,35 @@
+{
+  "name": "wave-logistics-mobile",
+  "version": "1.0.0",
+  "description": "Mobile app for Wave Logistics with cross-platform support",
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "react": "18.2.0",
+    "react-native": "0.72.6",
+    "expo": "~49.0.15",
+    "expo-status-bar": "~1.6.0",
+    "@react-navigation/native": "^6.1.9",
+    "@react-navigation/native-stack": "^6.9.17",
+    "@react-native-async-storage/async-storage": "^1.21.0",
+    "axios": "^1.6.2",
+    "socket.io-client": "^4.7.2",
+    "expo-local-authentication": "~13.4.1",
+    "expo-secure-store": "~12.3.1",
+    "expo-crypto": "~12.4.1",
+    "expo-device": "~5.4.0",
+    "expo-application": "~5.3.0",
+    "jwt-decode": "^4.0.0",
+    "buffer": "^6.0.3",
+    "react-native-ssl-pinning": "^1.5.7"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0",
+    "@types/react": "~18.2.14"
+  }
+}
