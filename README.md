@@ -2,106 +2,133 @@
 
 A modern logistics and delivery management system built with Django, featuring sophisticated animations and a premium user interface.
 
+[![CI/CD](https://github.com/Randylomo1/wave/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/Randylomo1/wave/actions/workflows/ci-cd.yml)
+
 ## Features
 
-- 🚀 Modern, responsive design with premium animations
-- 💫 GSAP-powered smooth transitions and effects
-- 🎨 Advanced 3D effects and parallax scrolling
-- 🖱️ Interactive mouse trails and magnetic buttons
-- 🌊 Dynamic SVG animations and particle systems
-- 📱 Progressive Web App (PWA) support
-- 🔒 Secure authentication system
-- 📦 Product and order management
-- 💝 Wishlist functionality
-- 🛒 Shopping cart system
+- 🎨 Modern UI with GSAP-powered animations
+- 🔒 Secure authentication and authorization
+- 💳 Multiple payment gateways (M-Pesa, PayPal, Stripe)
+- 📦 Real-time order tracking
+- 🛒 Shopping cart and wishlist functionality
+- 📱 Responsive design and PWA support
+- 🔍 Advanced product search and filtering
+- 📊 Admin dashboard for business analytics
 
-## Technologies Used
+## Tech Stack
 
-- **Frontend**:
-  - HTML5, CSS3, JavaScript (ES6+)
-  - GSAP (GreenSock Animation Platform)
-  - CSS Grid & Flexbox
-  - Progressive Web App features
-  - Responsive Design
+### Frontend
+- HTML5, CSS3, JavaScript (ES6+)
+- GSAP Animation Library
+- Progressive Web App (PWA)
+- Responsive Design with CSS Grid/Flexbox
 
-- **Backend**:
-  - Django
-  - SQLite/PostgreSQL
-  - Django REST Framework
-  - Celery (for background tasks)
+### Backend
+- Django 5.0.3
+- Django REST Framework
+- JWT Authentication
+- SQLite (Development) / PostgreSQL (Production)
 
-- **Animation Libraries**:
-  - GSAP Core
-  - ScrollTrigger Plugin
-  - MotionPath Plugin
+### Payment Integration
+- M-Pesa Integration
+- PayPal REST SDK
+- Stripe Payment Gateway
 
 ## Installation
 
 1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/wave-logistics.git
-   cd wave-logistics
-   ```
+```bash
+git clone https://github.com/Randylomo1/wave.git
+cd wave
+```
 
-2. Create and activate a virtual environment:
-   ```bash
-   python -m venv env
-   source env/bin/activate  # On Windows: env\Scripts\activate
-   ```
+2. Create and activate virtual environment:
+```bash
+python -m venv venv
+source venv/bin/activate  # Linux/Mac
+.\venv\Scripts\activate   # Windows
+```
 
 3. Install dependencies:
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+pip install -r requirements.txt
+```
 
 4. Set up environment variables:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your configuration
-   ```
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+```
 
 5. Run migrations:
-   ```bash
-   python manage.py migrate
-   ```
+```bash
+python manage.py migrate
+```
 
-6. Create a superuser:
-   ```bash
-   python manage.py createsuperuser
-   ```
+6. Create superuser:
+```bash
+python manage.py createsuperuser
+```
 
-7. Run the development server:
-   ```bash
-   python manage.py runserver
-   ```
+7. Run development server:
+```bash
+python manage.py runserver
+```
 
 ## Project Structure
 
 ```
 wave-logistics/
-├── main/                   # Main Django app
-│   ├── templates/         # HTML templates
-│   ├── static/           # Static files
-│   └── views.py          # View logic
-├── static/                # Global static files
-│   ├── css/             # CSS files
-│   ├── js/              # JavaScript files
-│   └── img/             # Images
-└── manage.py             # Django management script
+├── main/                   # Main application
+│   ├── migrations/        # Database migrations
+│   ├── templates/        # HTML templates
+│   ├── static/          # Static files (CSS, JS, images)
+│   ├── models.py        # Database models
+│   ├── views.py         # View logic
+│   └── urls.py          # URL routing
+├── static/               # Global static files
+├── templates/            # Global templates
+├── wave_logistics/       # Project configuration
+├── requirements.txt      # Python dependencies
+└── manage.py            # Django management script
 ```
 
-## Animation System
+## API Documentation
 
-The project features a sophisticated animation system built with GSAP:
+### Authentication
+- POST `/api/token/` - Obtain JWT token
+- POST `/api/token/refresh/` - Refresh JWT token
 
-- Background animations with floating orbs
-- Mouse trail effects
-- Magnetic buttons
-- Smooth scroll implementations
-- Particle systems
-- SVG morphing
-- 3D transformations
-- Parallax effects
+### Products
+- GET `/api/products/` - List all products
+- GET `/api/products/{id}/` - Get product details
+- POST `/api/products/` - Create new product (Admin only)
+
+### Orders
+- GET `/api/orders/` - List user's orders
+- POST `/api/orders/` - Create new order
+- GET `/api/orders/{tracking_number}/` - Get order details
+
+### Payments
+- POST `/api/payments/initiate/` - Initiate payment
+- POST `/api/payments/process/` - Process payment
+- POST `/api/payments/callback/` - Payment gateway callback
+
+## Testing
+
+Run tests with coverage:
+```bash
+coverage run manage.py test
+coverage report
+```
+
+## CI/CD Pipeline
+
+Our CI/CD pipeline includes:
+- Automated testing
+- Code quality checks
+- Security scanning
+- Automated deployments
 
 ## Contributing
 
@@ -111,16 +138,24 @@ The project features a sophisticated animation system built with GSAP:
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
+## Security
+
+- All payments are processed through secure payment gateways
+- JWT authentication for API security
+- CSRF protection enabled
+- XSS prevention measures
+- Regular security updates
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
 
-- GSAP by GreenSock
-- Django Community
-- Font Awesome
-- All contributors and supporters
+- GSAP Animation Library
+- Django Framework
+- Payment Gateway Providers
+- Open Source Community
 
 ## Security Features
 
