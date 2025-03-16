@@ -565,6 +565,34 @@ def track_order(request, tracking_number):
     
     return render(request, 'main/track_order.html', context)
 
+@login_required
+def track_order_detail(request, tracking_number):
+    """View detailed tracking information for an order"""
+    try:
+        # Get order by tracking number
+        order = get_object_or_404(Order, tracking_number=tracking_number)
+        
+        # Check if user owns this order
+        if order.user != request.user:
+            messages.error(request, 'You do not have permission to view this order.')
+            return redirect('main:order_history')
+            
+        # Get tracking updates
+        tracking_updates = order.tracking_updates.all().order_by('-timestamp')
+        
+        context = {
+            'order': order,
+            'tracking_updates': tracking_updates,
+            'current_status': order.get_status_display()
+        }
+        
+        return render(request, 'main/track_order_detail.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error tracking order detail: {str(e)}")
+        messages.error(request, 'An error occurred while retrieving tracking information.')
+        return redirect('main:order_history')
+
 def product_list(request):
     categories = Category.objects.all()
     category_slug = request.GET.get('category')
@@ -818,3 +846,113 @@ def remove_from_wishlist(request, item_id):
         })
     
     return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@throttle_classes([PaymentRateThrottle])
+def process_payment(request):
+    """Process payment after initiation"""
+    try:
+        # Validate request body
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'error': 'Invalid JSON payload'
+            }, status=400)
+
+        # Get payment reference
+        reference = data.get('reference')
+        if not reference:
+            return JsonResponse({
+                'error': 'Payment reference is required'
+            }, status=400)
+
+        # Get transaction
+        try:
+            transaction = PaymentTransaction.objects.get(reference=reference)
+        except PaymentTransaction.DoesNotExist:
+            return JsonResponse({
+                'error': 'Invalid payment reference'
+            }, status=404)
+
+        # Check if payment is already processed
+        if transaction.status in ['completed', 'failed']:
+            return JsonResponse({
+                'error': 'Payment already processed'
+            }, status=400)
+
+        # Process based on payment method
+        if transaction.payment_method == 'mpesa':
+            return process_mpesa_payment(request, transaction)
+        elif transaction.payment_method == 'paypal':
+            return process_paypal_payment(request, transaction)
+        elif transaction.payment_method == 'card':
+            return process_card_payment(request, transaction)
+        else:
+            return JsonResponse({
+                'error': 'Unsupported payment method'
+            }, status=400)
+
+    except Exception as e:
+        logger.error(f"Payment processing error: {str(e)}")
+        return JsonResponse({
+            'error': 'An error occurred while processing your payment'
+        }, status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def payment_callback(request):
+    """Handle payment gateway callbacks"""
+    try:
+        # Verify callback signature
+        if not verify_webhook_signature(request, settings.WEBHOOK_SECRET):
+            return HttpResponse(status=401)
+
+        # Parse callback data
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return HttpResponse(status=400)
+
+        # Get payment reference
+        reference = data.get('reference')
+        if not reference:
+            return HttpResponse(status=400)
+
+        # Get transaction
+        try:
+            transaction = PaymentTransaction.objects.get(reference=reference)
+        except PaymentTransaction.DoesNotExist:
+            return HttpResponse(status=404)
+
+        # Update transaction status
+        status = data.get('status', '').lower()
+        if status == 'success':
+            transaction.status = 'completed'
+            transaction.completed_at = timezone.now()
+            
+            # Create or update order
+            order = Order.objects.create(
+                user=transaction.user,
+                total_amount=transaction.amount,
+                payment_method=transaction.payment_method,
+                payment_reference=transaction.reference,
+                status='processing'
+            )
+            
+            # Clear user's cart
+            Cart.objects.filter(user=transaction.user).delete()
+            
+        elif status == 'failed':
+            transaction.status = 'failed'
+            transaction.failure_reason = data.get('reason', 'Payment failed')
+        
+        transaction.save()
+
+        return HttpResponse(status=200)
+
+    except Exception as e:
+        logger.error(f"Payment callback error: {str(e)}")
+        return HttpResponse(status=500)
