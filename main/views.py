@@ -14,7 +14,7 @@ from rest_framework.throttling import UserRateThrottle, ScopedRateThrottle
 from rest_framework.response import Response
 from rest_framework import status
 from .mpesa.mpesa import MpesaClient
-from .models import MpesaPayment, PaymentTransaction, Order, Product, Category, Cart, CartItem, Wishlist
+from .models import MpesaPayment, PaymentTransaction, Order, Product, Category, Cart, CartItem, Wishlist, TrackingUpdate
 import json
 import re
 import paypalrestsdk
@@ -380,73 +380,158 @@ def initiate_card_payment(request, transaction: PaymentTransaction):
 @csrf_exempt
 @require_http_methods(["POST"])
 def mpesa_callback(request):
-    """Handle M-Pesa callback"""
+    """Handle M-Pesa payment callback"""
     try:
         # Verify callback signature
-        if not verify_webhook_signature(request, settings.MPESA_PASSKEY):
+        if not verify_webhook_signature(request, settings.MPESA_WEBHOOK_SECRET):
             logger.error("Invalid M-Pesa callback signature")
-            return JsonResponse({
-                'error': 'Invalid signature'
-            }, status=400)
-
+            return HttpResponse(status=400)
+            
+        # Parse callback data
         data = json.loads(request.body)
+        checkout_request_id = data.get('CheckoutRequestID')
         
-        # Extract callback data
-        callback_data = data.get('Body', {}).get('stkCallback', {})
-        result_code = callback_data.get('ResultCode')
-        result_desc = callback_data.get('ResultDesc')
-        checkout_request_id = callback_data.get('CheckoutRequestID')
+        # Get M-Pesa payment
+        mpesa_payment = get_object_or_404(MpesaPayment, checkout_request_id=checkout_request_id)
+        transaction = mpesa_payment.transaction
         
-        # Get related transactions
-        try:
-            mpesa_payment = MpesaPayment.objects.get(reference=checkout_request_id)
-            transaction = PaymentTransaction.objects.get(reference=mpesa_payment.reference)
-        except (MpesaPayment.DoesNotExist, PaymentTransaction.DoesNotExist):
-            logger.error(f"Transaction not found for checkout request: {checkout_request_id}")
-            return JsonResponse({
-                'error': 'Transaction not found'
-            }, status=404)
-        
-        if result_code == 0:
-            # Payment successful
-            callback_metadata = callback_data.get('CallbackMetadata', {}).get('Item', [])
-            amount = next((item['Value'] for item in callback_metadata if item['Name'] == 'Amount'), None)
-            mpesa_receipt_number = next((item['Value'] for item in callback_metadata if item['Name'] == 'MpesaReceiptNumber'), None)
-            transaction_date = next((item['Value'] for item in callback_metadata if item['Name'] == 'TransactionDate'), None)
-            phone_number = next((item['Value'] for item in callback_metadata if item['Name'] == 'PhoneNumber'), None)
-            
-            # Update transaction records
-            mpesa_payment.status = 'Completed'
-            mpesa_payment.transaction_id = mpesa_receipt_number
-            mpesa_payment.transaction_date = transaction_date
-            mpesa_payment.result_code = str(result_code)
-            mpesa_payment.result_description = result_desc
-            mpesa_payment.save()
-            
+        # Update payment status
+        result_code = data.get('ResultCode')
+        if result_code == '0':  # Success
             transaction.status = 'completed'
-            transaction.transaction_id = mpesa_receipt_number
-            transaction.save()
-            
+            # Create or update order
+            create_or_update_order(transaction)
         else:
-            # Payment failed
-            mpesa_payment.status = 'Failed'
-            mpesa_payment.result_code = str(result_code)
-            mpesa_payment.result_description = result_desc
-            mpesa_payment.save()
-            
             transaction.status = 'failed'
-            transaction.save()
             
-        return JsonResponse({
-            'result_desc': result_desc,
-            'result_code': result_code
-        })
+        transaction.save()
+        
+        # Update M-Pesa payment details
+        mpesa_payment.result_code = str(result_code)
+        mpesa_payment.result_description = data.get('ResultDesc', '')
+        mpesa_payment.save()
+        
+        return HttpResponse(status=200)
         
     except Exception as e:
         logger.error(f"M-Pesa callback error: {str(e)}")
-        return JsonResponse({
-            'error': str(e)
-        }, status=500)
+        return HttpResponse(status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def paypal_callback(request):
+    """Handle PayPal payment callback"""
+    try:
+        # Verify callback signature
+        if not verify_webhook_signature(request, settings.PAYPAL_WEBHOOK_SECRET):
+            logger.error("Invalid PayPal callback signature")
+            return HttpResponse(status=400)
+            
+        # Parse callback data
+        data = json.loads(request.body)
+        reference = data.get('custom_id')  # Transaction reference stored in custom_id
+        
+        # Get transaction
+        transaction = get_object_or_404(PaymentTransaction, reference=reference)
+        
+        # Update payment status based on PayPal event type
+        event_type = data.get('event_type')
+        if event_type == 'PAYMENT.CAPTURE.COMPLETED':
+            transaction.status = 'completed'
+            # Create or update order
+            create_or_update_order(transaction)
+        elif event_type in ['PAYMENT.CAPTURE.DENIED', 'PAYMENT.CAPTURE.DECLINED']:
+            transaction.status = 'failed'
+            
+        transaction.save()
+        
+        return HttpResponse(status=200)
+        
+    except Exception as e:
+        logger.error(f"PayPal callback error: {str(e)}")
+        return HttpResponse(status=500)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def stripe_webhook(request):
+    """Handle Stripe payment webhook"""
+    try:
+        # Verify Stripe signature
+        payload = request.body
+        sig_header = request.headers.get('Stripe-Signature')
+        
+        try:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+            )
+        except ValueError as e:
+            logger.error("Invalid payload")
+            return HttpResponse(status=400)
+        except stripe.error.SignatureVerificationError as e:
+            logger.error("Invalid signature")
+            return HttpResponse(status=400)
+            
+        # Handle the event
+        if event.type == 'payment_intent.succeeded':
+            payment_intent = event.data.object
+            reference = payment_intent.metadata.get('reference')
+            
+            # Get transaction
+            transaction = get_object_or_404(PaymentTransaction, reference=reference)
+            transaction.status = 'completed'
+            transaction.save()
+            
+            # Create or update order
+            create_or_update_order(transaction)
+            
+        elif event.type == 'payment_intent.payment_failed':
+            payment_intent = event.data.object
+            reference = payment_intent.metadata.get('reference')
+            
+            # Update transaction status
+            transaction = get_object_or_404(PaymentTransaction, reference=reference)
+            transaction.status = 'failed'
+            transaction.save()
+            
+        return HttpResponse(status=200)
+        
+    except Exception as e:
+        logger.error(f"Stripe webhook error: {str(e)}")
+        return HttpResponse(status=500)
+
+def create_or_update_order(transaction):
+    """Create or update order after successful payment"""
+    try:
+        # Get cart
+        cart = Cart.objects.get(user=transaction.customer_email)
+        
+        # Create order
+        order = Order.objects.create(
+            user=cart.user,
+            full_name=cart.user.get_full_name(),
+            email=transaction.customer_email,
+            phone=transaction.customer_phone,
+            amount=transaction.amount,
+            status='processing',
+            tracking_number=f"TRK-{get_random_string(12).upper()}"
+        )
+        
+        # Create initial tracking update
+        TrackingUpdate.objects.create(
+            order=order,
+            status='processing',
+            location='Processing Center',
+            description='Order received and being processed'
+        )
+        
+        # Clear cart
+        cart.delete()
+        
+        return order
+        
+    except Exception as e:
+        logger.error(f"Error creating order: {str(e)}")
+        raise
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -594,53 +679,55 @@ def track_order_detail(request, tracking_number):
         return redirect('main:order_history')
 
 def product_list(request):
-    categories = Category.objects.all()
-    category_slug = request.GET.get('category')
-    search_query = request.GET.get('q')
-    sort_by = request.GET.get('sort', '-created_at')
-    
-    products = Product.objects.filter(is_available=True)
-    
-    if category_slug:
-        category = get_object_or_404(Category, slug=category_slug)
-        products = products.filter(category=category)
-    
-    if search_query:
-        products = products.filter(
-            Q(name__icontains=search_query) |
-            Q(description__icontains=search_query)
-        )
-    
-    if sort_by == 'price_low':
-        products = products.order_by('price')
-    elif sort_by == 'price_high':
-        products = products.order_by('-price')
-    elif sort_by == 'name':
-        products = products.order_by('name')
-    else:
-        products = products.order_by('-created_at')
-
-    context = {
-        'categories': categories,
-        'products': products,
-        'current_category': category_slug,
-        'search_query': search_query,
-        'sort_by': sort_by
-    }
-    return render(request, 'main/product_list.html', context)
+    """Display list of products"""
+    try:
+        category_slug = request.GET.get('category')
+        search_query = request.GET.get('q')
+        
+        products = Product.objects.filter(available=True)
+        categories = Category.objects.all()
+        
+        if category_slug:
+            category = get_object_or_404(Category, slug=category_slug)
+            products = products.filter(category=category)
+            
+        if search_query:
+            products = products.filter(
+                Q(name__icontains=search_query) |
+                Q(description__icontains=search_query)
+            )
+            
+        context = {
+            'products': products,
+            'categories': categories,
+            'current_category': category_slug,
+            'search_query': search_query
+        }
+        return render(request, 'main/product_list.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error accessing product list: {str(e)}")
+        messages.error(request, "Error loading products.")
+        return redirect('main:index')
 
 def product_detail(request, slug):
-    product = get_object_or_404(Product, slug=slug, is_available=True)
-    related_products = Product.objects.filter(
-        category=product.category,
-        is_available=True
-    ).exclude(id=product.id)[:4]
-    
-    context = {
-        'product': product,
-        'related_products': related_products
-    }
-    return render(request, 'main/product_detail.html', context)
+    """Display product details"""
+    try:
+        product = get_object_or_404(Product, slug=slug, available=True)
+        related_products = Product.objects.filter(
+            category=product.category
+        ).exclude(id=product.id)[:4]
+        
+        context = {
+            'product': product,
+            'related_products': related_products
+        }
+        return render(request, 'main/product_detail.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error accessing product detail: {str(e)}")
+        messages.error(request, "Error loading product details.")
+        return redirect('main:product_list')
 
 @login_required
 def cart_summary(request):
@@ -798,8 +885,14 @@ def order_confirmation(request, order_number):
 
 @login_required
 def order_history(request):
-    orders = Order.objects.filter(user=request.user).order_by('-created_at')
-    return render(request, 'main/order_history.html', {'orders': orders})
+    """Display user's order history"""
+    try:
+        orders = Order.objects.filter(user=request.user).order_by('-created')
+        return render(request, 'main/order_history.html', {'orders': orders})
+    except Exception as e:
+        logger.error(f"Error accessing order history: {str(e)}")
+        messages.error(request, "Error accessing order history.")
+        return redirect('main:index')
 
 @login_required
 def order_detail(request, order_number):
@@ -956,3 +1049,116 @@ def payment_callback(request):
     except Exception as e:
         logger.error(f"Payment callback error: {str(e)}")
         return HttpResponse(status=500)
+
+@login_required
+def cart_detail(request):
+    """Display cart details"""
+    try:
+        cart = Cart.objects.get(user=request.user)
+        cart_items = cart.items.all()
+        total = cart.get_total()
+        
+        context = {
+            'cart': cart,
+            'cart_items': cart_items,
+            'total': total
+        }
+        return render(request, 'main/cart_detail.html', context)
+    except Cart.DoesNotExist:
+        cart = Cart.objects.create(user=request.user)
+        return render(request, 'main/cart_detail.html', {'cart': cart, 'cart_items': [], 'total': 0})
+
+@login_required
+def cart_add(request, product_id):
+    """Add a product to cart"""
+    try:
+        product = get_object_or_404(Product, id=product_id)
+        cart, created = Cart.objects.get_or_create(user=request.user)
+        
+        cart_item, created = CartItem.objects.get_or_create(
+            cart=cart,
+            product=product,
+            defaults={'quantity': 1}
+        )
+        
+        if not created:
+            cart_item.quantity += 1
+            cart_item.save()
+            
+        messages.success(request, f"{product.name} added to cart.")
+        return redirect('main:cart_detail')
+        
+    except Exception as e:
+        logger.error(f"Error adding to cart: {str(e)}")
+        messages.error(request, "Error adding product to cart.")
+        return redirect('main:product_list')
+
+@login_required
+def cart_remove(request, product_id):
+    """Remove a product from cart"""
+    try:
+        cart = Cart.objects.get(user=request.user)
+        product = get_object_or_404(Product, id=product_id)
+        cart_item = get_object_or_404(CartItem, cart=cart, product=product)
+        cart_item.delete()
+        
+        messages.success(request, f"{product.name} removed from cart.")
+        return redirect('main:cart_detail')
+        
+    except Exception as e:
+        logger.error(f"Error removing from cart: {str(e)}")
+        messages.error(request, "Error removing product from cart.")
+        return redirect('main:cart_detail')
+
+@login_required
+def wishlist_detail(request):
+    """Display wishlist details"""
+    try:
+        wishlist, created = Wishlist.objects.get_or_create(user=request.user)
+        context = {
+            'wishlist': wishlist,
+            'products': wishlist.products.all()
+        }
+        return render(request, 'main/wishlist_detail.html', context)
+    except Exception as e:
+        logger.error(f"Error accessing wishlist: {str(e)}")
+        messages.error(request, "Error accessing wishlist.")
+        return redirect('main:product_list')
+
+@login_required
+def wishlist_add(request, product_id):
+    """Add a product to wishlist"""
+    try:
+        product = get_object_or_404(Product, id=product_id)
+        wishlist, created = Wishlist.objects.get_or_create(user=request.user)
+        
+        if product not in wishlist.products.all():
+            wishlist.products.add(product)
+            messages.success(request, f"{product.name} added to wishlist.")
+        else:
+            messages.info(request, f"{product.name} is already in your wishlist.")
+            
+        return redirect('main:wishlist_detail')
+        
+    except Exception as e:
+        logger.error(f"Error adding to wishlist: {str(e)}")
+        messages.error(request, "Error adding product to wishlist.")
+        return redirect('main:product_list')
+
+@login_required
+def wishlist_remove(request, product_id):
+    """Remove a product from wishlist"""
+    try:
+        product = get_object_or_404(Product, id=product_id)
+        wishlist = get_object_or_404(Wishlist, user=request.user)
+        
+        if product in wishlist.products.all():
+            wishlist.products.remove(product)
+            messages.success(request, f"{product.name} removed from wishlist.")
+        
+        return redirect('main:wishlist_detail')
+        
+    except Exception as e:
+        logger.error(f"Error removing from wishlist: {str(e)}")
+        messages.error(request, "Error removing product from wishlist.")
+        return redirect('main:wishlist_detail')

@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.utils.text import slugify
 import uuid
+from django.core.validators import MinValueValidator, MaxValueValidator
+from decimal import Decimal
 
 # Create your models here.
 
@@ -15,6 +17,7 @@ class PaymentTransaction(models.Model):
     
     STATUS_CHOICES = (
         ('pending', 'Pending'),
+        ('processing', 'Processing'),
         ('completed', 'Completed'),
         ('failed', 'Failed'),
     )
@@ -67,9 +70,9 @@ class MpesaPayment(models.Model):
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
-    slug = models.SlugField(unique=True, blank=True)
+    slug = models.SlugField(unique=True)
     description = models.TextField(blank=True)
-    image = models.ImageField(upload_to='categories/', blank=True, null=True)
+    image = models.ImageField(upload_to='categories/', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -86,14 +89,14 @@ class Category(models.Model):
         return self.name
 
 class Product(models.Model):
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
-    slug = models.SlugField(unique=True, blank=True)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products')
+    slug = models.SlugField(unique=True)
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     stock = models.PositiveIntegerField(default=0)
     image = models.ImageField(upload_to='products/')
-    is_available = models.BooleanField(default=True)
+    available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -146,58 +149,32 @@ class CartItem(models.Model):
         return self.quantity * self.product.price
 
 class Order(models.Model):
-    STATUS_CHOICES = (
+    STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('processing', 'Processing'),
         ('shipped', 'Shipped'),
         ('delivered', 'Delivered'),
         ('cancelled', 'Cancelled')
-    )
-
-    PAYMENT_STATUS_CHOICES = (
-        ('pending', 'Pending'),
-        ('paid', 'Paid'),
-        ('failed', 'Failed'),
-        ('refunded', 'Refunded')
-    )
-
-    order_number = models.CharField(max_length=20, unique=True, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    ]
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=100)
     email = models.EmailField()
     phone = models.CharField(max_length=20)
-    address = models.TextField()
-    city = models.CharField(max_length=100)
-    state = models.CharField(max_length=100)
-    postal_code = models.CharField(max_length=20)
-    country = models.CharField(max_length=100)
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    address = models.TextField(default='')
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default='pending')
-    payment_method = models.CharField(max_length=50)
-    shipping_cost = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    tracking_number = models.CharField(max_length=100, blank=True)
-    notes = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        ordering = ['-created_at']
-
+    tracking_number = models.CharField(max_length=50, unique=True)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+    
     def save(self, *args, **kwargs):
-        if not self.order_number:
-            self.order_number = self.generate_order_number()
+        if not self.tracking_number:
+            self.tracking_number = f"TRK-{uuid.uuid4().hex[:12].upper()}"
         super().save(*args, **kwargs)
-
-    def generate_order_number(self):
-        return f"ORD-{uuid.uuid4().hex[:8].upper()}"
-
+    
     def __str__(self):
-        return self.order_number
-
-    @property
-    def total_items(self):
-        return sum(item.quantity for item in self.items.all())
+        return f"Order {self.tracking_number}"
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
@@ -207,20 +184,29 @@ class OrderItem(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.quantity} x {self.product.name} in {self.order.order_number}"
+        return f"{self.quantity} x {self.product.name} in {self.order.tracking_number}"
 
     @property
     def total_price(self):
         return self.quantity * self.price
 
 class Wishlist(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlists')
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    products = models.ManyToManyField(Product)
     created_at = models.DateTimeField(auto_now_add=True)
 
-    class Meta:
-        unique_together = ('user', 'product')
-        ordering = ['-created_at']
-
     def __str__(self):
-        return f"{self.user.username}'s wishlist - {self.product.name}"
+        return f"{self.user.username}'s wishlist"
+
+class TrackingUpdate(models.Model):
+    order = models.ForeignKey(Order, related_name='tracking_updates', on_delete=models.CASCADE)
+    status = models.CharField(max_length=20, choices=Order.STATUS_CHOICES)
+    location = models.CharField(max_length=200)
+    description = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-timestamp']
+    
+    def __str__(self):
+        return f"{self.order.tracking_number} - {self.status}"
