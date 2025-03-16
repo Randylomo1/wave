@@ -1,0 +1,27 @@
+{
+  "name": "wave-logistics-frontend",
+  "version": "1.0.0",
+  "description": "Frontend assets for Wave Logistics",
+  "scripts": {
+    "dev": "webpack --mode development --watch",
+    "build": "webpack --mode production",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@stripe/stripe-js": "^1.54.0",
+    "core-js": "^3.30.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.22.1",
+    "@babel/preset-env": "^7.22.4",
+    "babel-loader": "^9.1.2",
+    "css-loader": "^6.8.1",
+    "mini-css-extract-plugin": "^2.7.6",
+    "optimize-css-assets-webpack-plugin": "^6.0.1",
+    "style-loader": "^3.3.3",
+    "terser-webpack-plugin": "^5.3.9",
+    "webpack": "^5.85.0",
+    "webpack-bundle-tracker": "^1.8.1",
+    "webpack-cli": "^5.1.1"
+  }
+} 

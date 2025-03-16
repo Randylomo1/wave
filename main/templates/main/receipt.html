@@ -1,0 +1,232 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Order Receipt - Wave Logistics{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media print {
+        .no-print {
+            display: none !important;
+        }
+        
+        .receipt {
+            padding: 20px;
+            max-width: none;
+            margin: 0;
+            box-shadow: none;
+        }
+
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        .receipt-header img {
+            max-width: 150px;
+        }
+    }
+
+    .receipt {
+        background: white;
+        padding: 30px;
+        max-width: 800px;
+        margin: 20px auto;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .receipt-header {
+        text-align: center;
+        margin-bottom: 30px;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 20px;
+    }
+
+    .receipt-header img {
+        max-width: 200px;
+        margin-bottom: 10px;
+    }
+
+    .receipt-details {
+        margin-bottom: 30px;
+    }
+
+    .receipt-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        padding: 5px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .receipt-label {
+        font-weight: bold;
+        color: #666;
+    }
+
+    .receipt-value {
+        text-align: right;
+    }
+
+    .receipt-total {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 2px solid #eee;
+        font-size: 1.2em;
+    }
+
+    .receipt-footer {
+        margin-top: 30px;
+        text-align: center;
+        color: #666;
+        font-size: 0.9em;
+    }
+
+    .receipt-barcode {
+        text-align: center;
+        margin: 20px 0;
+    }
+
+    .receipt-qr {
+        text-align: center;
+        margin: 20px 0;
+    }
+
+    .receipt-actions {
+        margin-top: 20px;
+        text-align: center;
+    }
+
+    .tracking-status {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 4px;
+        margin: 20px 0;
+    }
+
+    .status-active {
+        color: var(--primary-color);
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="receipt">
+    <div class="receipt-header">
+        <img src="{% static 'main/img/logo.png' %}" alt="Wave Logistics Logo">
+        <h1>Order Receipt</h1>
+        <p>Order #{{ order.reference_number }}</p>
+    </div>
+
+    <div class="receipt-details">
+        <div class="receipt-row">
+            <span class="receipt-label">Date:</span>
+            <span class="receipt-value">{{ order.created_at|date:"F j, Y" }}</span>
+        </div>
+        <div class="receipt-row">
+            <span class="receipt-label">Time:</span>
+            <span class="receipt-value">{{ order.created_at|time:"g:i A" }}</span>
+        </div>
+        <div class="receipt-row">
+            <span class="receipt-label">Customer:</span>
+            <span class="receipt-value">{{ order.customer_name }}</span>
+        </div>
+        <div class="receipt-row">
+            <span class="receipt-label">Contact:</span>
+            <span class="receipt-value">{{ order.customer_phone }}</span>
+        </div>
+    </div>
+
+    <div class="receipt-details">
+        <h3>Package Details</h3>
+        <div class="receipt-row">
+            <span class="receipt-label">Package Type:</span>
+            <span class="receipt-value">{{ order.package_type }}</span>
+        </div>
+        <div class="receipt-row">
+            <span class="receipt-label">Weight:</span>
+            <span class="receipt-value">{{ order.weight }} kg</span>
+        </div>
+        <div class="receipt-row">
+            <span class="receipt-label">Dimensions:</span>
+            <span class="receipt-value">{{ order.dimensions }}</span>
+        </div>
+    </div>
+
+    <div class="receipt-details">
+        <h3>Location Details</h3>
+        <div class="receipt-row">
+            <span class="receipt-label">Pickup Location:</span>
+            <span class="receipt-value">{{ order.pickup_location }}</span>
+        </div>
+        <div class="receipt-row">
+            <span class="receipt-label">Delivery Location:</span>
+            <span class="receipt-value">{{ order.delivery_location }}</span>
+        </div>
+        <div class="receipt-row">
+            <span class="receipt-label">Estimated Delivery:</span>
+            <span class="receipt-value">{{ order.estimated_delivery|date:"F j, Y" }}</span>
+        </div>
+    </div>
+
+    <div class="tracking-status">
+        <h3>Current Status</h3>
+        <p class="status-active">{{ order.current_status }}</p>
+        <p>Last Updated: {{ order.last_updated|date:"F j, Y g:i A" }}</p>
+    </div>
+
+    <div class="receipt-details receipt-total">
+        <div class="receipt-row">
+            <span class="receipt-label">Shipping Cost:</span>
+            <span class="receipt-value">${{ order.shipping_cost }}</span>
+        </div>
+        {% if order.insurance_cost %}
+        <div class="receipt-row">
+            <span class="receipt-label">Insurance:</span>
+            <span class="receipt-value">${{ order.insurance_cost }}</span>
+        </div>
+        {% endif %}
+        <div class="receipt-row">
+            <span class="receipt-label">Total Amount:</span>
+            <span class="receipt-value">${{ order.total_amount }}</span>
+        </div>
+    </div>
+
+    <div class="receipt-barcode">
+        <img src="{% static 'main/img/'|add:barcode %}" alt="Barcode">
+        <div>{{ order.reference_number }}</div>
+    </div>
+
+    <div class="receipt-qr">
+        <img src="{% static 'main/img/'|add:qr_code %}" alt="QR Code">
+        <div>Scan to track your package</div>
+    </div>
+
+    <div class="receipt-footer">
+        <p>Thank you for choosing Wave Logistics!</p>
+        <p>For support, contact us at support@wavelogistics.com</p>
+        <p>Terms and conditions apply. All times are in local timezone.</p>
+    </div>
+
+    <div class="receipt-actions no-print">
+        <button onclick="window.print()" class="btn btn-primary">
+            Print Receipt
+        </button>
+        <button onclick="window.location.href='{% url 'track_order' order.reference_number %}'" class="btn btn-secondary">
+            Track Order
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-print when the page loads if coming from order confirmation
+    if (window.location.search.includes('autoprint=true')) {
+        window.addEventListener('load', () => {
+            window.print();
+        });
+    }
+</script>
+{% endblock %} 

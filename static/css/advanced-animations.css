@@ -1,0 +1,140 @@
+/* Background Animation Patterns */
+.animated-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.gradient-orb {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.4;
+    mix-blend-mode: soft-light;
+}
+
+.orb-1 { background: linear-gradient(45deg, #ff3366, #ff6b6b); }
+.orb-2 { background: linear-gradient(45deg, #4158D0, #C850C0); }
+.orb-3 { background: linear-gradient(45deg, #0093E9, #80D0C7); }
+
+/* Mouse Trail Effect */
+.cursor-dot {
+    width: 8px;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+.cursor-trail {
+    width: 24px;
+    height: 24px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 9998;
+    transition: width 0.2s, height 0.2s;
+}
+
+/* SVG Animation Styles */
+.animated-svg {
+    position: absolute;
+    opacity: 0.1;
+}
+
+.svg-wave {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.1);
+    stroke-width: 2;
+}
+
+.svg-circle {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.1);
+    stroke-width: 2;
+    stroke-dasharray: 283;
+    stroke-dashoffset: 283;
+}
+
+/* Interactive Elements */
+.hover-zoom {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-zoom:hover {
+    transform: scale(1.05);
+}
+
+/* Image Reveal Effect */
+.image-reveal {
+    position: relative;
+    overflow: hidden;
+}
+
+.image-reveal::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, #1a1a1a, #333);
+    transform-origin: left;
+}
+
+/* Magnetic Buttons */
+.magnetic-wrap {
+    position: relative;
+    display: inline-block;
+    transform-style: preserve-3d;
+}
+
+.magnetic-area {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    left: 0;
+    transform-style: preserve-3d;
+}
+
+/* Particle System */
+.particle-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.particle {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+/* Smooth Scroll Containers */
+.smooth-scroll {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.scroll-content {
+    will-change: transform;
+} 

@@ -1,0 +1,207 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Shopping Cart - Wave Logistics{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="cart-page">
+        <h1>Shopping Cart</h1>
+        
+        {% if cart.items.all %}
+        <div class="row">
+            <!-- Cart Items -->
+            <div class="col-lg-8">
+                <div class="cart-items">
+                    {% for item in cart.items.all %}
+                    <div class="cart-item" data-item-id="{{ item.id }}">
+                        <div class="item-image">
+                            <a href="{% url 'product_detail' item.product.slug %}">
+                                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                            </a>
+                        </div>
+                        <div class="item-details">
+                            <h3 class="item-name">
+                                <a href="{% url 'product_detail' item.product.slug %}">{{ item.product.name }}</a>
+                            </h3>
+                            <p class="item-category">{{ item.product.category.name }}</p>
+                            <div class="item-price">${{ item.product.price }}</div>
+                            
+                            <div class="item-controls">
+                                <div class="quantity-controls">
+                                    <button class="btn btn-outline-secondary btn-sm quantity-btn" 
+                                            onclick="updateQuantity({{ item.id }}, -1)">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <input type="number" class="form-control quantity-input" 
+                                           value="{{ item.quantity }}" min="1" max="{{ item.product.stock }}"
+                                           onchange="updateQuantity({{ item.id }}, 0, this.value)">
+                                    <button class="btn btn-outline-secondary btn-sm quantity-btn"
+                                            onclick="updateQuantity({{ item.id }}, 1)">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <button class="btn btn-danger btn-sm remove-item" 
+                                        onclick="removeItem({{ item.id }})">
+                                    <i class="fas fa-trash"></i> Remove
+                                </button>
+                            </div>
+                            
+                            <div class="item-total">
+                                Total: $<span class="item-total-price">{{ item.total_price }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Cart Summary -->
+            <div class="col-lg-4">
+                <div class="cart-summary">
+                    <h3>Order Summary</h3>
+                    <div class="summary-item">
+                        <span>Subtotal</span>
+                        <span>${{ cart.total_price }}</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Shipping</span>
+                        <span>$10.00</span>
+                    </div>
+                    <div class="summary-total">
+                        <span>Total</span>
+                        <span>${{ cart.total_price|add:"10.00" }}</span>
+                    </div>
+                    <a href="{% url 'checkout' %}" class="btn btn-primary btn-lg btn-block checkout-btn">
+                        Proceed to Checkout
+                    </a>
+                    <div class="secure-checkout">
+                        <i class="fas fa-lock"></i> Secure Checkout
+                    </div>
+                    <div class="accepted-payments">
+                        <p>We Accept:</p>
+                        <div class="payment-icons">
+                            <i class="fab fa-cc-visa"></i>
+                            <i class="fab fa-cc-mastercard"></i>
+                            <i class="fab fa-cc-amex"></i>
+                            <i class="fab fa-cc-paypal"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-cart">
+            <i class="fas fa-shopping-cart"></i>
+            <h2>Your cart is empty</h2>
+            <p>Add some products to your cart and they will appear here.</p>
+            <a href="{% url 'product_list' %}" class="btn btn-primary">
+                Continue Shopping
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateQuantity(itemId, change, newValue = null) {
+    const item = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
+    const input = item.querySelector('.quantity-input');
+    const currentValue = parseInt(input.value);
+    const maxStock = parseInt(input.getAttribute('max'));
+    
+    let quantity;
+    if (newValue !== null) {
+        quantity = parseInt(newValue);
+    } else {
+        quantity = currentValue + change;
+    }
+    
+    quantity = Math.max(1, Math.min(quantity, maxStock));
+    
+    fetch(`/cart/update/${itemId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': utils.getCsrfToken()
+        },
+        body: `quantity=${quantity}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            window.showToast('Error', data.error, 'error');
+            input.value = currentValue;  // Reset to previous value
+        } else {
+            input.value = quantity;
+            updateCartDisplay(data);
+            window.showToast('Success', data.message, 'success');
+        }
+    })
+    .catch(error => {
+        window.showToast('Error', 'Failed to update cart', 'error');
+        input.value = currentValue;  // Reset to previous value
+    });
+}
+
+function removeItem(itemId) {
+    if (!confirm('Are you sure you want to remove this item?')) {
+        return;
+    }
+    
+    fetch(`/cart/remove/${itemId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': utils.getCsrfToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            window.showToast('Error', data.error, 'error');
+        } else {
+            const item = document.querySelector(`.cart-item[data-item-id="${itemId}"]`);
+            item.remove();
+            updateCartDisplay(data);
+            window.showToast('Success', data.message, 'success');
+            
+            // If cart is empty, refresh the page to show empty cart message
+            if (data.cart_total === 0) {
+                location.reload();
+            }
+        }
+    })
+    .catch(error => {
+        window.showToast('Error', 'Failed to remove item', 'error');
+    });
+}
+
+function updateCartDisplay(data) {
+    // Update cart count in navbar
+    const cartCount = document.querySelector('.cart-count');
+    if (cartCount) {
+        cartCount.textContent = data.cart_total;
+    }
+    
+    // Update cart subtotal and total
+    const subtotal = document.querySelector('.summary-item:first-child span:last-child');
+    const total = document.querySelector('.summary-total span:last-child');
+    if (subtotal && total) {
+        subtotal.textContent = `$${data.cart_subtotal.toFixed(2)}`;
+        total.textContent = `$${(data.cart_subtotal + 10).toFixed(2)}`;
+    }
+}
+
+// Prevent form submission when pressing enter in quantity input
+document.querySelectorAll('.quantity-input').forEach(input => {
+    input.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            this.blur();
+        }
+    });
+});
+</script>
+{% endblock %} 

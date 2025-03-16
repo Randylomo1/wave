@@ -1,35 +1,55 @@
 {
   "expo": {
     "name": "Wave Logistics",
-    "slug": "wave-logistics-mobile",
+    "slug": "wave-logistics",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
     },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.wavelogistics.mobile",
-      "buildNumber": "1.0.0"
+      "bundleIdentifier": "com.wavelogistics.app",
+      "buildNumber": "1.0.0",
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app needs access to the camera to scan QR codes",
+        "NSPhotoLibraryUsageDescription": "This app needs access to photos for uploading delivery documents",
+        "NSLocationWhenInUseUsageDescription": "This app needs access to location for delivery tracking"
+      }
     },
     "android": {
+      "package": "com.wavelogistics.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#FFFFFF"
       },
-      "package": "com.wavelogistics.mobile",
-      "versionCode": 1
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "plugins": [
+      "expo-camera",
+      "expo-location",
+      "expo-file-system",
+      "expo-secure-store"
+    ],
+    "privacy": "unlisted",
     "extra": {
       "eas": {
         "projectId": "your-project-id"

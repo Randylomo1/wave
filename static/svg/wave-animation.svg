@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1440" height="200" viewBox="0 0 1440 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <style>
+        .wave {
+            animation: wave 20s linear infinite;
+            opacity: 0.3;
+        }
+        .wave2 {
+            animation: wave2 15s linear infinite;
+            opacity: 0.2;
+        }
+        .wave3 {
+            animation: wave3 25s linear infinite;
+            opacity: 0.1;
+        }
+        @keyframes wave {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-100%); }
+        }
+        @keyframes wave2 {
+            0% { transform: translateX(0) translateY(5px); }
+            100% { transform: translateX(-100%) translateY(5px); }
+        }
+        @keyframes wave3 {
+            0% { transform: translateX(0) translateY(-5px); }
+            100% { transform: translateX(-100%) translateY(-5px); }
+        }
+    </style>
+    <path class="wave" d="M0,100 C320,140,420,60,740,100 C1060,140,1160,60,1480,100 V200 H0" fill="url(#gradient1)"/>
+    <path class="wave2" d="M0,100 C320,60,420,140,740,100 C1060,60,1160,140,1480,100 V200 H0" fill="url(#gradient2)"/>
+    <path class="wave3" d="M0,100 C320,100,420,100,740,100 C1060,100,1160,100,1480,100 V200 H0" fill="url(#gradient3)"/>
+    
+    <defs>
+        <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#4158D0;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#C850C0;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#0093E9;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#80D0C7;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="gradient3" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#ff3366;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#ff6b6b;stop-opacity:1" />
+        </linearGradient>
+    </defs>
+</svg> 

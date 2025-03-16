@@ -1,0 +1,183 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }} - Wave Logistics{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="product-detail">
+        <div class="product-images">
+            <div class="main-image">
+                <img src="{{ product.image.url }}" alt="{{ product.name }}">
+            </div>
+        </div>
+        
+        <div class="product-info">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'product_list' %}">Products</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'product_list_by_category' product.category.slug %}">{{ product.category.name }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
+                </ol>
+            </nav>
+            
+            <h1 class="product-title">{{ product.name }}</h1>
+            <div class="product-meta">
+                <span class="product-category">{{ product.category.name }}</span>
+                <span class="product-stock {% if not product.is_in_stock %}out-of-stock{% endif %}">
+                    {% if product.is_in_stock %}
+                    In Stock ({{ product.stock }} available)
+                    {% else %}
+                    Out of Stock
+                    {% endif %}
+                </span>
+            </div>
+            
+            <div class="product-price">${{ product.price }}</div>
+            
+            <div class="product-description">
+                {{ product.description|linebreaks }}
+            </div>
+            
+            <div class="product-actions">
+                {% if product.is_in_stock %}
+                <form class="add-to-cart-form" method="post" action="{% url 'add_to_cart' product.id %}">
+                    {% csrf_token %}
+                    <div class="quantity-selector">
+                        <label for="quantity">Quantity:</label>
+                        <div class="quantity-controls">
+                            <button type="button" class="btn btn-outline-secondary" onclick="updateQuantity(-1)">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" id="quantity" name="quantity" value="1" min="1" max="{{ product.stock }}" class="form-control">
+                            <button type="button" class="btn btn-outline-secondary" onclick="updateQuantity(1)">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-cart-plus"></i> Add to Cart
+                    </button>
+                </form>
+                {% endif %}
+                
+                <button class="btn btn-outline-primary btn-lg add-to-wishlist" onclick="toggleWishlist({{ product.id }})">
+                    <i class="fas fa-heart"></i> Add to Wishlist
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    {% if related_products %}
+    <div class="related-products">
+        <h2>Related Products</h2>
+        <div class="product-grid">
+            {% for related in related_products %}
+            <div class="product-card">
+                <div class="product-image">
+                    <a href="{% url 'product_detail' related.slug %}">
+                        <img src="{{ related.image.url }}" alt="{{ related.name }}">
+                    </a>
+                    {% if not related.is_in_stock %}
+                    <span class="out-of-stock">Out of Stock</span>
+                    {% endif %}
+                </div>
+                <div class="product-info">
+                    <h3 class="product-name">
+                        <a href="{% url 'product_detail' related.slug %}">{{ related.name }}</a>
+                    </h3>
+                    <p class="product-category">{{ related.category.name }}</p>
+                    <div class="product-price">${{ related.price }}</div>
+                    {% if related.is_in_stock %}
+                    <form class="add-to-cart-form" method="post" action="{% url 'add_to_cart' related.id %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="quantity" value="1">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-cart-plus"></i> Add to Cart
+                        </button>
+                    </form>
+                    {% else %}
+                    <button class="btn btn-secondary" disabled>Out of Stock</button>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateQuantity(change) {
+    const input = document.getElementById('quantity');
+    const currentValue = parseInt(input.value);
+    const maxStock = parseInt(input.getAttribute('max'));
+    const newValue = Math.max(1, Math.min(currentValue + change, maxStock));
+    input.value = newValue;
+}
+
+function toggleWishlist(productId) {
+    fetch(`/wishlist/add/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': utils.getCsrfToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            window.showToast('Error', data.error, 'error');
+        } else {
+            window.showToast('Success', data.message, 'success');
+            // Update wishlist count in navbar if you have one
+            const wishlistCount = document.querySelector('.wishlist-count');
+            if (wishlistCount) {
+                wishlistCount.textContent = data.wishlist_count;
+            }
+            // Update button state
+            const button = document.querySelector('.add-to-wishlist');
+            if (data.message.includes('added')) {
+                button.classList.add('active');
+                button.innerHTML = '<i class="fas fa-heart"></i> Added to Wishlist';
+            }
+        }
+    })
+    .catch(error => {
+        window.showToast('Error', 'Failed to update wishlist', 'error');
+    });
+}
+
+// Handle add to cart forms
+document.querySelectorAll('.add-to-cart-form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: new FormData(this),
+            headers: {
+                'X-CSRFToken': utils.getCsrfToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                window.showToast('Error', data.error, 'error');
+            } else {
+                window.showToast('Success', data.message, 'success');
+                // Update cart count in navbar if you have one
+                const cartCount = document.querySelector('.cart-count');
+                if (cartCount) {
+                    cartCount.textContent = data.cart_total;
+                }
+            }
+        })
+        .catch(error => {
+            window.showToast('Error', 'Failed to add item to cart', 'error');
+        });
+    });
+});
+</script>
+{% endblock %} 

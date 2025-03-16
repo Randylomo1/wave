@@ -1,0 +1,37 @@
+{% load static %}
+<div class="product-card card-3d">
+    <div class="product-card-inner product-3d-inner">
+        <!-- Front of card -->
+        <div class="product-3d-front">
+            <div class="product-image parallax-layer-1">
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
+            </div>
+            <div class="product-details parallax-layer-2">
+                <h3 class="text-prestigious" data-text="{{ product.name }}">{{ product.name }}</h3>
+                <p class="price">{{ product.price|floatformat:2 }}</p>
+                {% if product.stock > 0 %}
+                    <span class="stock-status in-stock">In Stock</span>
+                {% else %}
+                    <span class="stock-status out-of-stock">Out of Stock</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Back of card -->
+        <div class="product-3d-back glass-effect">
+            <div class="product-description parallax-layer-1">
+                <p>{{ product.description }}</p>
+            </div>
+            <div class="product-actions parallax-layer-2">
+                <button class="btn-prestigious add-to-cart" 
+                        data-product-id="{{ product.id }}"
+                        {% if not product.stock > 0 %}disabled{% endif %}>
+                    <i class="fas fa-shopping-cart"></i> Add to Cart
+                </button>
+                <button class="btn-prestigious add-to-wishlist" data-product-id="{{ product.id }}">
+                    <i class="fas fa-heart"></i> Add to Wishlist
+                </button>
+            </div>
+        </div>
+    </div>
+</div> 

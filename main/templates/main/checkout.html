@@ -1,0 +1,379 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Checkout - Wave Logistics{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="checkout-page">
+        <h1>Checkout</h1>
+        
+        <div class="row">
+            <!-- Checkout Form -->
+            <div class="col-lg-8">
+                <form id="checkout-form" method="post" action="{% url 'checkout' %}">
+                    {% csrf_token %}
+                    
+                    <!-- Contact Information -->
+                    <div class="checkout-section">
+                        <h3>Contact Information</h3>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="full_name" class="form-label">Full Name</label>
+                                <input type="text" class="form-control" id="full_name" name="full_name" 
+                                       value="{{ request.user.get_full_name }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="{{ request.user.email }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="phone" class="form-label">Phone Number</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Shipping Address -->
+                    <div class="checkout-section">
+                        <h3>Shipping Address</h3>
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Street Address</label>
+                            <input type="text" class="form-control" id="address" name="address" required>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="city" class="form-label">City</label>
+                                <input type="text" class="form-control" id="city" name="city" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="state" class="form-label">State/Province</label>
+                                <input type="text" class="form-control" id="state" name="state" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="postal_code" class="form-label">Postal Code</label>
+                                <input type="text" class="form-control" id="postal_code" name="postal_code" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="country" class="form-label">Country</label>
+                                <select class="form-select" id="country" name="country" required>
+                                    <option value="">Select a country</option>
+                                    <option value="US">United States</option>
+                                    <option value="CA">Canada</option>
+                                    <option value="GB">United Kingdom</option>
+                                    <option value="AU">Australia</option>
+                                    <!-- Add more countries as needed -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Method -->
+                    <div class="checkout-section">
+                        <h3>Payment Method</h3>
+                        <div class="payment-methods">
+                            <div class="form-check payment-method">
+                                <input class="form-check-input" type="radio" name="payment_method" 
+                                       id="credit_card" value="credit_card" checked>
+                                <label class="form-check-label" for="credit_card">
+                                    <i class="fas fa-credit-card"></i> Credit Card
+                                </label>
+                                <div class="payment-icons">
+                                    <i class="fab fa-cc-visa"></i>
+                                    <i class="fab fa-cc-mastercard"></i>
+                                    <i class="fab fa-cc-amex"></i>
+                                </div>
+                            </div>
+                            <div class="form-check payment-method">
+                                <input class="form-check-input" type="radio" name="payment_method" 
+                                       id="paypal" value="paypal">
+                                <label class="form-check-label" for="paypal">
+                                    <i class="fab fa-paypal"></i> PayPal
+                                </label>
+                            </div>
+                            <div class="form-check payment-method">
+                                <input class="form-check-input" type="radio" name="payment_method" 
+                                       id="mpesa" value="mpesa">
+                                <label class="form-check-label" for="mpesa">
+                                    <i class="fas fa-mobile-alt"></i> M-Pesa
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Credit Card Form -->
+                        <div id="credit-card-form" class="payment-form">
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label for="card_number" class="form-label">Card Number</label>
+                                    <input type="text" class="form-control" id="card_number" 
+                                           placeholder="1234 5678 9012 3456">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="expiry" class="form-label">Expiry Date</label>
+                                    <input type="text" class="form-control" id="expiry" 
+                                           placeholder="MM/YY">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="cvv" class="form-label">CVV</label>
+                                    <input type="text" class="form-control" id="cvv" 
+                                           placeholder="123">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PayPal Form -->
+                        <div id="paypal-form" class="payment-form" style="display: none;">
+                            <p>You will be redirected to PayPal to complete your payment.</p>
+                            <div id="paypal-button-container"></div>
+                        </div>
+
+                        <!-- M-Pesa Form -->
+                        <div id="mpesa-form" class="payment-form" style="display: none;">
+                            <div class="mb-3">
+                                <label for="mpesa_phone" class="form-label">M-Pesa Phone Number</label>
+                                <input type="tel" class="form-control" id="mpesa_phone" 
+                                       placeholder="254700000000">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg place-order-btn">
+                        Place Order
+                    </button>
+                </form>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="col-lg-4">
+                <div class="order-summary">
+                    <h3>Order Summary</h3>
+                    <div class="order-items">
+                        {% for item in cart.items.all %}
+                        <div class="order-item">
+                            <div class="item-image">
+                                <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}">
+                                <span class="item-quantity">{{ item.quantity }}</span>
+                            </div>
+                            <div class="item-details">
+                                <h4>{{ item.product.name }}</h4>
+                                <p>${{ item.total_price }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <div class="order-totals">
+                        <div class="total-line">
+                            <span>Subtotal</span>
+                            <span>${{ cart.total_price }}</span>
+                        </div>
+                        <div class="total-line">
+                            <span>Shipping</span>
+                            <span>${{ shipping_cost }}</span>
+                        </div>
+                        <div class="total-line total">
+                            <span>Total</span>
+                            <span>${{ cart.total_price|add:shipping_cost }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="checkout-info">
+                    <div class="info-item">
+                        <i class="fas fa-shield-alt"></i>
+                        <div>
+                            <h4>Secure Payment</h4>
+                            <p>Your payment information is encrypted and secure.</p>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-truck"></i>
+                        <div>
+                            <h4>Fast Shipping</h4>
+                            <p>2-4 business days delivery.</p>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-undo"></i>
+                        <div>
+                            <h4>Easy Returns</h4>
+                            <p>30-day return policy.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://js.stripe.com/v3/"></script>
+<script src="https://www.paypal.com/sdk/js?client-id={{ paypal_client_id }}&currency=USD"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Payment method selection
+    const paymentMethods = document.querySelectorAll('input[name="payment_method"]');
+    const paymentForms = document.querySelectorAll('.payment-form');
+    
+    paymentMethods.forEach(method => {
+        method.addEventListener('change', function() {
+            paymentForms.forEach(form => {
+                form.style.display = 'none';
+            });
+            document.getElementById(`${this.value}-form`).style.display = 'block';
+        });
+    });
+
+    // Form validation
+    const form = document.getElementById('checkout-form');
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+        
+        // Validate required fields
+        const requiredFields = form.querySelectorAll('[required]');
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                isValid = false;
+                field.classList.add('is-invalid');
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        if (!isValid) {
+            window.showToast('Error', 'Please fill in all required fields', 'error');
+            return;
+        }
+        
+        // Show loading state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        
+        // Process payment based on method
+        switch (paymentMethod) {
+            case 'credit_card':
+                processCardPayment();
+                break;
+            case 'paypal':
+                processPayPalPayment();
+                break;
+            case 'mpesa':
+                processMpesaPayment();
+                break;
+        }
+        
+        // Reset button state after processing
+        function resetButton() {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+        }
+        
+        // Payment processing functions
+        function processCardPayment() {
+            const stripe = Stripe('{{ stripe_public_key }}');
+            // Add your Stripe payment logic here
+            
+            // For demo, just submit the form
+            form.submit();
+        }
+        
+        function processPayPalPayment() {
+            // Add your PayPal payment logic here
+            
+            // For demo, just submit the form
+            form.submit();
+        }
+        
+        function processMpesaPayment() {
+            const phone = document.getElementById('mpesa_phone').value;
+            
+            fetch('{% url "initiate_payment" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': utils.getCsrfToken()
+                },
+                body: JSON.stringify({
+                    phone_number: phone,
+                    amount: '{{ cart.total_price|add:shipping_cost }}'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    window.showToast('Error', data.error, 'error');
+                    resetButton();
+                } else {
+                    window.showToast('Success', 'Please check your phone for the M-Pesa prompt', 'success');
+                    // Poll for payment status
+                    pollPaymentStatus(data.checkout_request_id);
+                }
+            })
+            .catch(error => {
+                window.showToast('Error', 'Failed to initiate payment', 'error');
+                resetButton();
+            });
+        }
+        
+        function pollPaymentStatus(checkoutRequestId) {
+            const pollInterval = setInterval(() => {
+                fetch(`{% url "check_payment_status" %}${checkoutRequestId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'completed') {
+                            clearInterval(pollInterval);
+                            form.submit();
+                        } else if (data.status === 'failed') {
+                            clearInterval(pollInterval);
+                            window.showToast('Error', 'Payment failed', 'error');
+                            resetButton();
+                        }
+                    })
+                    .catch(error => {
+                        clearInterval(pollInterval);
+                        window.showToast('Error', 'Failed to check payment status', 'error');
+                        resetButton();
+                    });
+            }, 5000);
+            
+            // Stop polling after 2 minutes
+            setTimeout(() => {
+                clearInterval(pollInterval);
+                window.showToast('Error', 'Payment timeout', 'error');
+                resetButton();
+            }, 120000);
+        }
+    });
+    
+    // Input formatting
+    const cardNumber = document.getElementById('card_number');
+    const expiry = document.getElementById('expiry');
+    const cvv = document.getElementById('cvv');
+    
+    cardNumber.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        value = value.replace(/(.{4})/g, '$1 ').trim();
+        e.target.value = value;
+    });
+    
+    expiry.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '');
+        if (value.length >= 2) {
+            value = value.slice(0, 2) + '/' + value.slice(2, 4);
+        }
+        e.target.value = value;
+    });
+    
+    cvv.addEventListener('input', function(e) {
+        e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4);
+    });
+});
+</script>
+{% endblock %} 

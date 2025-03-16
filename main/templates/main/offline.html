@@ -1,0 +1,94 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Offline - Wave Logistics{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="offline-wrapper">
+        <img src="{% static 'main/img/offline.svg' %}" alt="Offline" class="offline-image">
+        <h1>You're Offline</h1>
+        <p>It seems you've lost your internet connection. Please check your connection and try again.</p>
+        <div class="offline-actions">
+            <button onclick="window.location.reload()" class="btn btn-primary">
+                <i class="fas fa-sync-alt"></i> Retry Connection
+            </button>
+            <a href="/" class="btn btn-secondary">Go to Homepage</a>
+        </div>
+        <div class="offline-features">
+            <h2>Available Offline Features:</h2>
+            <ul>
+                <li>View saved orders</li>
+                <li>Access cached tracking information</li>
+                <li>View saved receipts</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .offline-wrapper {
+        max-width: 600px;
+        margin: 4rem auto;
+        text-align: center;
+        padding: 2rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px var(--shadow-color);
+    }
+
+    .offline-image {
+        width: 200px;
+        height: auto;
+        margin-bottom: 2rem;
+    }
+
+    .offline-actions {
+        margin: 2rem 0;
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+    }
+
+    .offline-features {
+        text-align: left;
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .offline-features ul {
+        list-style: none;
+        padding: 0;
+        margin: 1rem 0;
+    }
+
+    .offline-features li {
+        padding: 0.5rem 0;
+        color: var(--text-muted);
+    }
+
+    .offline-features li::before {
+        content: "✓";
+        color: var(--success-color);
+        margin-right: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .offline-wrapper {
+            margin: 2rem 1rem;
+            padding: 1rem;
+        }
+
+        .offline-actions {
+            flex-direction: column;
+        }
+
+        .offline-image {
+            width: 150px;
+        }
+    }
+</style>
+{% endblock %} 

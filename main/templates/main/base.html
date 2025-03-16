@@ -1,0 +1,164 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Wave Logistics - Premium Logistics Solutions">
+    <title>{% block title %}Wave Logistics{% endblock %}</title>
+
+    <!-- Favicon and PWA -->
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'img/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'img/favicon-16x16.png' %}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'img/apple-touch-icon.png' %}">
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <meta name="theme-color" content="#1a1a1a">
+
+    <!-- Preconnect to External Resources -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+
+    <!-- Preload Critical Resources -->
+    <link rel="preload" href="{% static 'css/main.css' %}" as="style">
+    <link rel="preload" href="{% static 'css/animations.css' %}" as="style">
+    <link rel="preload" href="{% static 'css/3d-effects.css' %}" as="style">
+    <link rel="preload" href="{% static 'css/advanced-animations.css' %}" as="style">
+    <link rel="preload" href="{% static 'js/main.js' %}" as="script" type="module">
+    <link rel="preload" href="{% static 'js/animations.js' %}" as="script" type="module">
+
+    <!-- GSAP Animation Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/MotionPathPlugin.min.js" defer></script>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+    <link rel="stylesheet" href="{% static 'css/animations.css' %}">
+    <link rel="stylesheet" href="{% static 'css/3d-effects.css' %}">
+    <link rel="stylesheet" href="{% static 'css/advanced-animations.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="fade-in">
+    <!-- Animated Background -->
+    <div class="animated-background">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+        <div class="gradient-orb orb-3"></div>
+    </div>
+
+    <!-- Mouse Trail -->
+    <div class="cursor-dot"></div>
+    <div class="cursor-trail"></div>
+
+    <!-- Particle Container -->
+    <div class="particle-container"></div>
+
+    <!-- SVG Animations -->
+    <svg class="animated-svg" width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <path class="svg-wave" d="M0,50 Q25,30 50,50 T100,50" />
+        <circle class="svg-circle" cx="50" cy="50" r="45" />
+    </svg>
+
+    <!-- Smooth Scroll Container -->
+    <div class="smooth-scroll">
+        <div class="scroll-content">
+            <!-- Navigation -->
+            <nav class="navbar nav-3d glass-effect">
+                <div class="container parallax-container">
+                    <a href="{% url 'home' %}" class="navbar-brand hover-float parallax-layer-2">
+                        <img src="{% static 'img/logo.png' %}" alt="Wave Logistics" class="navbar-logo">
+                    </a>
+                    
+                    <button class="menu-toggle" aria-label="Toggle navigation">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                    
+                    <div class="nav-links stagger-children">
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'dashboard' %}" class="magnetic-wrap parallax-layer-1">
+                                <span class="magnetic-area">Dashboard</span>
+                            </a>
+                            <a href="{% url 'orders' %}" class="magnetic-wrap parallax-layer-1">
+                                <span class="magnetic-area">Orders</span>
+                            </a>
+                            <a href="{% url 'profile' %}" class="magnetic-wrap parallax-layer-1">
+                                <span class="magnetic-area">Profile</span>
+                            </a>
+                            <a href="{% url 'logout' %}" class="magnetic-wrap parallax-layer-1">
+                                <span class="magnetic-area">Logout</span>
+                            </a>
+                        {% else %}
+                            <a href="{% url 'login' %}" class="magnetic-wrap btn-prestigious parallax-layer-1">
+                                <span class="magnetic-area">Login</span>
+                            </a>
+                            <a href="{% url 'register' %}" class="magnetic-wrap btn-prestigious parallax-layer-1">
+                                <span class="magnetic-area">Register</span>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Messages -->
+            <div class="messages">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="notification {{ message.tags }} glass-effect slide-in-right" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+
+            <!-- Main Content -->
+            <main class="slide-up">
+                <div class="parallax-container">
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+
+            <!-- Footer -->
+            <footer class="footer footer-3d glass-effect">
+                <div class="container">
+                    <div class="footer-content footer-3d-content stagger-children">
+                        <div class="footer-section depth-shadow parallax-layer-1">
+                            <h3 class="text-prestigious" data-text="Quick Links">Quick Links</h3>
+                            <a href="{% url 'about' %}" class="hover-float">About Us</a>
+                            <a href="{% url 'services' %}" class="hover-float">Services</a>
+                            <a href="{% url 'contact' %}" class="hover-float">Contact</a>
+                        </div>
+                        <div class="footer-section depth-shadow parallax-layer-2">
+                            <h3 class="text-prestigious" data-text="Contact Us">Contact Us</h3>
+                            <p>Email: support@wavelogistics.com</p>
+                            <p>Phone: +1 (555) 123-4567</p>
+                        </div>
+                        <div class="footer-section depth-shadow parallax-layer-3">
+                            <h3 class="text-prestigious" data-text="Follow Us">Follow Us</h3>
+                            <div class="social-links">
+                                <a href="#" aria-label="Facebook" class="hover-grow"><i class="fab fa-facebook"></i></a>
+                                <a href="#" aria-label="Twitter" class="hover-grow"><i class="fab fa-twitter"></i></a>
+                                <a href="#" aria-label="LinkedIn" class="hover-grow"><i class="fab fa-linkedin"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="footer-bottom">
+                        <p class="text-prestigious" data-text="© {% now 'Y' %} Wave Logistics. All rights reserved.">
+                            © {% now "Y" %} Wave Logistics. All rights reserved.
+                        </p>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container"></div>
+
+    <!-- Core JavaScript -->
+    <script type="module" src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

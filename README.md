@@ -1,23 +1,126 @@
 # Wave Logistics
 
-A modern logistics management system built with Django, featuring M-Pesa integration for payments.
+A modern logistics and delivery management system built with Django, featuring sophisticated animations and a premium user interface.
 
 ## Features
 
-- Modern, responsive UI
-- Secure form handling
-- M-Pesa payment integration
-- Real-time payment status updates
-- Input validation and sanitization
-- Security best practices implementation
+- 🚀 Modern, responsive design with premium animations
+- 💫 GSAP-powered smooth transitions and effects
+- 🎨 Advanced 3D effects and parallax scrolling
+- 🖱️ Interactive mouse trails and magnetic buttons
+- 🌊 Dynamic SVG animations and particle systems
+- 📱 Progressive Web App (PWA) support
+- 🔒 Secure authentication system
+- 📦 Product and order management
+- 💝 Wishlist functionality
+- 🛒 Shopping cart system
 
-## Tech Stack
+## Technologies Used
 
-- Python 3.12
-- Django 5.0.3
-- django-daraja (M-Pesa integration)
-- JavaScript (ES6+)
-- HTML5/CSS3
+- **Frontend**:
+  - HTML5, CSS3, JavaScript (ES6+)
+  - GSAP (GreenSock Animation Platform)
+  - CSS Grid & Flexbox
+  - Progressive Web App features
+  - Responsive Design
+
+- **Backend**:
+  - Django
+  - SQLite/PostgreSQL
+  - Django REST Framework
+  - Celery (for background tasks)
+
+- **Animation Libraries**:
+  - GSAP Core
+  - ScrollTrigger Plugin
+  - MotionPath Plugin
+
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/wave-logistics.git
+   cd wave-logistics
+   ```
+
+2. Create and activate a virtual environment:
+   ```bash
+   python -m venv env
+   source env/bin/activate  # On Windows: env\Scripts\activate
+   ```
+
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Set up environment variables:
+   ```bash
+   cp .env.example .env
+   # Edit .env with your configuration
+   ```
+
+5. Run migrations:
+   ```bash
+   python manage.py migrate
+   ```
+
+6. Create a superuser:
+   ```bash
+   python manage.py createsuperuser
+   ```
+
+7. Run the development server:
+   ```bash
+   python manage.py runserver
+   ```
+
+## Project Structure
+
+```
+wave-logistics/
+├── main/                   # Main Django app
+│   ├── templates/         # HTML templates
+│   ├── static/           # Static files
+│   └── views.py          # View logic
+├── static/                # Global static files
+│   ├── css/             # CSS files
+│   ├── js/              # JavaScript files
+│   └── img/             # Images
+└── manage.py             # Django management script
+```
+
+## Animation System
+
+The project features a sophisticated animation system built with GSAP:
+
+- Background animations with floating orbs
+- Mouse trail effects
+- Magnetic buttons
+- Smooth scroll implementations
+- Particle systems
+- SVG morphing
+- 3D transformations
+- Parallax effects
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- GSAP by GreenSock
+- Django Community
+- Font Awesome
+- All contributors and supporters
 
 ## Security Features
 
@@ -36,55 +139,6 @@ A modern logistics management system built with Django, featuring M-Pesa integra
 - pip
 - Virtual environment
 - M-Pesa developer account (for payment integration)
-
-## Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/wave-logistics.git
-cd wave-logistics
-```
-
-2. Create and activate virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-4. Create .env file and add your configuration:
-```env
-DEBUG=True
-SECRET_KEY=your-secret-key
-ALLOWED_HOSTS=localhost,127.0.0.1
-
-# M-Pesa Configuration
-MPESA_ENVIRONMENT=sandbox
-MPESA_CONSUMER_KEY=your_consumer_key
-MPESA_CONSUMER_SECRET=your_consumer_secret
-MPESA_SHORTCODE=174379
-MPESA_EXPRESS_SHORTCODE=174379
-MPESA_SHORTCODE_TYPE=paybill
-MPESA_PASSKEY=your_passkey
-MPESA_INITIATOR_USERNAME=testapi
-MPESA_INITIATOR_SECURITY_CREDENTIAL=your_credential
-```
-
-5. Run migrations:
-```bash
-python manage.py migrate
-```
-
-6. Run the development server:
-```bash
-python manage.py runserver
-```
-
-Visit http://127.0.0.1:8000/ to see the application.
 
 ## Usage
 
@@ -106,18 +160,6 @@ Visit http://127.0.0.1:8000/ to see the application.
 - Keep dependencies updated
 - Follow security best practices
 - Regularly update security measures
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Contact
 

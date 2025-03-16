@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200px" height="200px" viewBox="0 0 200 200" version="1.1" xmlns="http://www.w3.org/2000/svg">
+    <g stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <!-- Cloud -->
+        <path d="M150,80 C150,53.49 128.51,32 102,32 C82.63,32 65.95,43.69 59.38,60.28 C57.12,59.44 54.64,59 52,59 C41.507,59 33,67.507 33,78 C33,78.339 33.028,78.672 33.05,79 C23.109,82.353 16,91.954 16,103 C16,117.359 27.641,129 42,129 L146,129 C162.569,129 176,115.569 176,99 C176,84.64 165.169,72.644 150,80 Z" fill="#E3E3E3"/>
+        
+        <!-- WiFi Waves (crossed out) -->
+        <g transform="translate(60, 90)">
+            <!-- Waves -->
+            <path d="M40,50 C53.25,36.75 73.75,36.75 87,50" stroke="#FF6B6B" stroke-width="4" stroke-linecap="round"/>
+            <path d="M48,42 C57.25,32.75 69.75,32.75 79,42" stroke="#FF6B6B" stroke-width="4" stroke-linecap="round"/>
+            <path d="M56,34 C61.25,28.75 65.75,28.75 71,34" stroke="#FF6B6B" stroke-width="4" stroke-linecap="round"/>
+            
+            <!-- Cross -->
+            <line x1="30" y1="30" x2="90" y2="90" stroke="#FF6B6B" stroke-width="4" stroke-linecap="round"/>
+            <line x1="90" y1="30" x2="30" y2="90" stroke="#FF6B6B" stroke-width="4" stroke-linecap="round"/>
+            
+            <!-- Dot -->
+            <circle cx="60" cy="60" r="4" fill="#FF6B6B"/>
+        </g>
+    </g>
+</svg> 

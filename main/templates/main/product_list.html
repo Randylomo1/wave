@@ -1,0 +1,149 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Products - Wave Logistics{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="product-list-page">
+        <!-- Filters and Search -->
+        <div class="filters-section">
+            <form class="search-form" method="get">
+                <div class="search-input">
+                    <input type="text" name="q" value="{{ search_query|default:'' }}" placeholder="Search products..." class="form-control">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                
+                <div class="filter-controls">
+                    <select name="category" class="form-select" onchange="this.form.submit()">
+                        <option value="">All Categories</option>
+                        {% for category in categories %}
+                        <option value="{{ category.slug }}" {% if category.slug == current_category %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    
+                    <select name="sort" class="form-select" onchange="this.form.submit()">
+                        <option value="-created_at" {% if sort_by == '-created_at' %}selected{% endif %}>Newest First</option>
+                        <option value="price_low" {% if sort_by == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+                        <option value="price_high" {% if sort_by == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+                        <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Name: A to Z</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <!-- Products Grid -->
+        {% if products %}
+        <div class="product-grid">
+            {% for product in products %}
+            <div class="product-card">
+                <div class="product-image">
+                    <a href="{% url 'main:product_detail' product.slug %}">
+                        <img src="{{ product.image.url }}" alt="{{ product.name }}">
+                    </a>
+                    {% if not product.is_in_stock %}
+                    <span class="out-of-stock">Out of Stock</span>
+                    {% endif %}
+                </div>
+                <div class="product-info">
+                    <h3 class="product-name">
+                        <a href="{% url 'main:product_detail' product.slug %}">{{ product.name }}</a>
+                    </h3>
+                    <p class="product-category">{{ product.category.name }}</p>
+                    <div class="product-price">${{ product.price }}</div>
+                    <div class="product-actions">
+                        {% if product.is_in_stock %}
+                        <form class="add-to-cart-form" method="post" action="{% url 'main:add_to_cart' product.id %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="quantity" value="1">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-cart-plus"></i> Add to Cart
+                            </button>
+                        </form>
+                        {% else %}
+                        <button class="btn btn-secondary" disabled>Out of Stock</button>
+                        {% endif %}
+                        <button class="btn btn-outline-primary add-to-wishlist" onclick="toggleWishlist({{ product.id }})">
+                            <i class="fas fa-heart"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-products">
+            <i class="fas fa-box-open"></i>
+            <h2>No products found</h2>
+            {% if search_query %}
+            <p>No products match your search criteria. Try different keywords or browse our categories.</p>
+            {% else %}
+            <p>No products are available at the moment. Please check back later.</p>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleWishlist(productId) {
+    fetch(`/wishlist/add/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': utils.getCsrfToken()
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            window.showToast('Error', data.error, 'error');
+        } else {
+            window.showToast('Success', data.message, 'success');
+            const wishlistCount = document.querySelector('.wishlist-count');
+            if (wishlistCount) {
+                wishlistCount.textContent = data.wishlist_count;
+            }
+        }
+    })
+    .catch(error => {
+        window.showToast('Error', 'Failed to update wishlist', 'error');
+    });
+}
+
+// Handle add to cart forms
+document.querySelectorAll('.add-to-cart-form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        fetch(this.action, {
+            method: 'POST',
+            body: new FormData(this),
+            headers: {
+                'X-CSRFToken': utils.getCsrfToken()
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                window.showToast('Error', data.error, 'error');
+            } else {
+                window.showToast('Success', data.message, 'success');
+                const cartCount = document.querySelector('.cart-count');
+                if (cartCount) {
+                    cartCount.textContent = data.cart_total;
+                }
+            }
+        })
+        .catch(error => {
+            window.showToast('Error', 'Failed to add item to cart', 'error');
+        });
+    });
+});
+</script>
+{% endblock %} 

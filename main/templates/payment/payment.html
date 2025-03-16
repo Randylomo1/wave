@@ -1,0 +1,210 @@
+{% extends 'main/base.html' %}
+{% load static %}
+
+{% block title %}Payment - Wave Logistics{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="payment-wrapper">
+        <h1 class="payment-title">Complete Your Payment</h1>
+        
+        <div class="payment-summary">
+            <h2>Order Summary</h2>
+            <div class="summary-item">
+                <span>Subtotal</span>
+                <span>{{ subtotal|default:"$0.00" }}</span>
+            </div>
+            <div class="summary-item">
+                <span>Tax</span>
+                <span>{{ tax|default:"$0.00" }}</span>
+            </div>
+            <div class="summary-item">
+                <span>Shipping</span>
+                <span>{{ shipping|default:"$0.00" }}</span>
+            </div>
+            <div class="summary-item summary-total">
+                <span>Total</span>
+                <span class="amount">{{ amount|default:"$0.00" }}</span>
+            </div>
+        </div>
+
+        <div class="security-badge">
+            <i class="fas fa-shield-alt"></i>
+            <span>Your payment is secured with industry-standard encryption</span>
+        </div>
+
+        <div class="payment-methods">
+            <h2>Select Payment Method</h2>
+            <div class="method-selector">
+                <button class="method-btn active" data-method="card" aria-pressed="true">
+                    <i class="fas fa-credit-card payment-method-icon"></i>
+                    Credit Card
+                </button>
+                <button class="method-btn" data-method="paypal" aria-pressed="false">
+                    <i class="fab fa-paypal payment-method-icon"></i>
+                    PayPal
+                </button>
+                <button class="method-btn" data-method="mpesa" aria-pressed="false">
+                    <i class="fas fa-mobile-alt payment-method-icon"></i>
+                    M-Pesa
+                </button>
+            </div>
+        </div>
+
+        <form id="payment-form" class="payment-form" method="POST" action="{% url 'initiate_payment' %}" novalidate>
+            {% csrf_token %}
+            
+            <div id="card-payment" class="payment-section active">
+                <div class="card-preview">
+                    <div class="card-chip"></div>
+                    <div class="card-number-preview">•••• •••• •••• ••••</div>
+                    <div class="card-details">
+                        <span class="card-holder">CARD HOLDER</span>
+                        <span class="card-expiry">MM/YY</span>
+                    </div>
+                    <div class="card-logo">
+                        <i class="fab fa-cc-visa"></i>
+                    </div>
+                </div>
+
+                <div class="form-floating">
+                    <input type="text" id="card-number" class="form-control" required 
+                           pattern="[0-9]{16}" placeholder=" " autocomplete="cc-number">
+                    <label for="card-number">Card Number</label>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-floating col-md-6">
+                        <input type="text" id="expiry" class="form-control" required 
+                               pattern="(0[1-9]|1[0-2])\/([0-9]{2})" placeholder=" " 
+                               autocomplete="cc-exp">
+                        <label for="expiry">Expiry Date</label>
+                    </div>
+                    <div class="form-floating col-md-6">
+                        <input type="text" id="cvv" class="form-control" required 
+                               pattern="[0-9]{3,4}" placeholder=" " autocomplete="cc-csc">
+                        <label for="cvv">CVV</label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="paypal-payment" class="payment-section">
+                <div id="paypal-button-container"></div>
+            </div>
+
+            <div id="mpesa-payment" class="payment-section">
+                <div class="form-floating">
+                    <input type="tel" id="phone-number" class="form-control" 
+                           pattern="[0-9]{10,12}" placeholder=" " autocomplete="tel">
+                    <label for="phone-number">M-Pesa Phone Number</label>
+                    <small class="form-text text-muted">Enter your M-Pesa registered phone number</small>
+                </div>
+            </div>
+
+            <div class="form-floating">
+                <input type="email" id="email" name="email" class="form-control" required 
+                       placeholder=" " autocomplete="email">
+                <label for="email">Email for Receipt</label>
+            </div>
+
+            <div class="payment-actions">
+                <button type="submit" class="btn btn-primary btn-block" id="submit-payment">
+                    <span class="payment-button-text">Pay Now</span>
+                    <span class="payment-amount">{{ amount|default:"$0.00" }}</span>
+                </button>
+                <button type="button" class="btn btn-secondary btn-block" onclick="window.history.back()">
+                    Cancel
+                </button>
+            </div>
+        </form>
+
+        <div id="payment-messages" aria-live="polite">
+            <div class="success-message" style="display: none;" role="alert"></div>
+            <div class="error-message" style="display: none;" role="alert"></div>
+        </div>
+    </div>
+</div>
+
+<div class="loading-overlay">
+    <div class="loading-spinner" role="status">
+        <span class="sr-only">Processing payment...</span>
+    </div>
+    <div class="loading-text">Processing your payment...</div>
+</div>
+
+<div class="toast-container"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://kit.fontawesome.com/your-font-awesome-kit.js" crossorigin="anonymous"></script>
+<script src="https://www.paypal.com/sdk/js?client-id=your-paypal-client-id&currency=USD"></script>
+<script src="{% static 'js/payment.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const paymentHandler = new PaymentHandler();
+        paymentHandler.init();
+
+        // Update card preview
+        const cardNumber = document.getElementById('card-number');
+        const cardExpiry = document.getElementById('expiry');
+        const cardPreviewNumber = document.querySelector('.card-number-preview');
+        const cardPreviewExpiry = document.querySelector('.card-expiry');
+
+        cardNumber.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/\s/g, '');
+            cardPreviewNumber.textContent = value 
+                ? value.replace(/(.{4})/g, '$1 ').trim() 
+                : '•••• •••• •••• ••••';
+        });
+
+        cardExpiry.addEventListener('input', (e) => {
+            cardPreviewExpiry.textContent = e.target.value || 'MM/YY';
+        });
+
+        // Handle offline status changes
+        window.addEventListener('online', () => {
+            showToast('Connected', 'You are back online!', 'success');
+        });
+
+        window.addEventListener('offline', () => {
+            showToast('Offline', 'You are currently offline. Some features may be limited.', 'warning');
+        });
+    });
+
+    function showToast(title, message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `
+            <i class="toast-icon fas fa-${getToastIcon(type)}"></i>
+            <div class="toast-content">
+                <div class="toast-title">${title}</div>
+                <div class="toast-message">${message}</div>
+            </div>
+            <button class="toast-close" aria-label="Close notification">×</button>
+            <div class="toast-progress"></div>
+        `;
+
+        const container = document.querySelector('.toast-container');
+        container.appendChild(toast);
+
+        toast.querySelector('.toast-close').addEventListener('click', () => {
+            toast.remove();
+        });
+
+        setTimeout(() => {
+            toast.classList.add('fade-out');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    function getToastIcon(type) {
+        const icons = {
+            success: 'check-circle',
+            error: 'exclamation-circle',
+            warning: 'exclamation-triangle',
+            info: 'info-circle'
+        };
+        return icons[type] || icons.info;
+    }
+</script>
+{% endblock %} 
